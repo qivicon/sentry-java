@@ -73,7 +73,7 @@ Logging Integration Configuration
     .. sourcecode:: xml
 
         <!-- logback.xml -->
-        <appender name="Sentry" class="io.sentry.logback.SentryAppender">
+        <appender name="Sentry" class="com.getsentry.raven.logback.SentryAppender">
             <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
                 <level>WARN</level>
             </filter>
@@ -113,7 +113,7 @@ Raven Class Changes
 
         // The static SentryClient can be lazily initialized from anywhere in your application.
         // Your DSN needs to be provided somehow, check the configuration documentation!
-        Sentry.capture("Hello, world!")
+        Sentry.capture("Hello, world!)
 
 Configuration via DSN
 ---------------------

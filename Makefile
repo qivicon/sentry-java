@@ -4,13 +4,15 @@
 
 # the test suite currently only works with 1.7.0_80
 # https://github.com/getsentry/sentry-java/issues/478
+export JAVA_HOME := $(shell /usr/libexec/java_home -v 1.7.0_80)
+export PATH := $(JAVA_HOME)/bin:$(PATH)
 
 .PHONY: checkstyle compile test install clean prepare prepareDocs prepareMvn prepareChanges perform verify
 
 # TODO: Fix to work between macOS and Linux
 MVN=mvn -e
-ECHO=echo
-SED=sed
+ECHO=gecho
+SED=gsed
 
 all: checkstyle test install
 

@@ -4,7 +4,11 @@ import io.sentry.event.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -96,9 +100,7 @@ public class DiskBuffer implements Buffer {
         File eventFile = new File(bufferDir, event.getId().toString() + FILE_SUFFIX);
         if (eventFile.exists()) {
             logger.debug("Discarding Event from offline storage: " + eventFile.getAbsolutePath());
-            if (!eventFile.delete()) {
-                logger.warn("Failed to delete Event: " + eventFile.getAbsolutePath());
-            }
+            eventFile.delete();
         }
     }
 
@@ -114,14 +116,9 @@ public class DiskBuffer implements Buffer {
         try (FileInputStream fileInputStream = new FileInputStream(new File(eventFile.getAbsolutePath()));
              ObjectInputStream ois = new ObjectInputStream(fileInputStream)) {
             eventObj = ois.readObject();
-        } catch (FileNotFoundException e) {
-            // event was deleted while we were iterating the array of files
-            return null;
         } catch (Exception e) {
             logger.error("Error reading Event file: " + eventFile.getAbsolutePath(), e);
-            if (!eventFile.delete()) {
-                logger.warn("Failed to delete Event: " + eventFile.getAbsolutePath());
-            }
+            eventFile.delete();
             return null;
         }
 
@@ -129,9 +126,7 @@ public class DiskBuffer implements Buffer {
             return (Event) eventObj;
         } catch (Exception e) {
             logger.error("Error casting Object to Event: " + eventFile.getAbsolutePath(), e);
-            if (!eventFile.delete()) {
-                logger.warn("Failed to delete Event: " + eventFile.getAbsolutePath());
-            }
+            eventFile.delete();
             return null;
         }
     }

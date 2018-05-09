@@ -81,15 +81,6 @@ public class SentryHandler extends Handler {
         LogManager manager = LogManager.getLogManager();
         String className = SentryHandler.class.getName();
         setPrintfStyle(Boolean.valueOf(manager.getProperty(className + ".printfStyle")));
-        setLevel(parseLevelOrDefault(manager.getProperty(className + ".level")));
-    }
-
-    private Level parseLevelOrDefault(String levelName) {
-        try {
-            return Level.parse(levelName.trim());
-        } catch (Exception e) {
-            return Level.WARNING;
-        }
     }
 
     @Override
@@ -148,6 +139,14 @@ public class SentryHandler extends Handler {
         Throwable throwable = record.getThrown();
         if (throwable != null) {
             eventBuilder.withSentryInterface(new ExceptionInterface(throwable));
+        }
+
+        if (record.getSourceClassName() != null && record.getSourceMethodName() != null) {
+            StackTraceElement fakeFrame = new StackTraceElement(record.getSourceClassName(),
+                record.getSourceMethodName(), null, -1);
+            eventBuilder.withCulprit(fakeFrame);
+        } else {
+            eventBuilder.withCulprit(record.getLoggerName());
         }
 
         Map<String, String> mdc = MDC.getMDCAdapter().getCopyOfContextMap();

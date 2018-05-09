@@ -2,7 +2,6 @@ package io.sentry.connection;
 
 import io.sentry.environment.SentryEnvironment;
 import io.sentry.event.Event;
-import io.sentry.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,10 +21,6 @@ public abstract class AbstractConnection implements Connection {
      */
     public static final String SENTRY_PROTOCOL_VERSION = "6";
     private static final Logger logger = LoggerFactory.getLogger(AbstractConnection.class);
-    // CHECKSTYLE.OFF: ConstantName
-    private static final Logger lockdownLogger =
-            LoggerFactory.getLogger(AbstractConnection.class.getName() + ".lockdown");
-    // CHECKSTYLE.ON: ConstantName
     /**
      * Value of the X-Sentry-Auth header.
      */
@@ -48,8 +43,8 @@ public abstract class AbstractConnection implements Connection {
         this.eventSendCallbacks = new HashSet<>();
         this.authHeader = "Sentry sentry_version=" + SENTRY_PROTOCOL_VERSION + ","
             + "sentry_client=" + SentryEnvironment.getSentryName() + ","
-            + "sentry_key=" + publicKey
-            + (!Util.isNullOrEmpty(secretKey) ? (",sentry_secret=" + secretKey) : "");
+            + "sentry_key=" + publicKey + ","
+            + "sentry_secret=" + secretKey;
     }
 
     /**
@@ -70,13 +65,10 @@ public abstract class AbstractConnection implements Connection {
                 important in, for example, a BufferedConnection where the Event would be deleted
                 from the Buffer if an exception isn't raised in the call to send.
                  */
-                throw new LockedDownException();
+                throw new LockedDownException("Dropping an Event due to lockdown: " + event);
             }
 
             doSend(event);
-
-            // success! re-open the floodgates
-            lockdownManager.unlock();
 
             for (EventSendCallback eventSendCallback : eventSendCallbacks) {
                 try {
@@ -86,6 +78,8 @@ public abstract class AbstractConnection implements Connection {
                         + eventSendCallback.getClass().getName(), exc);
                 }
             }
+
+            lockdownManager.resetState();
         } catch (ConnectionException e) {
             for (EventSendCallback eventSendCallback : eventSendCallbacks) {
                 try {
@@ -96,10 +90,8 @@ public abstract class AbstractConnection implements Connection {
                 }
             }
 
-            boolean lockedDown = lockdownManager.lockdown(e);
-            if (lockedDown) {
-                lockdownLogger.warn("Initiated a temporary lockdown because of exception: " + e.getMessage());
-            }
+            logger.warn("An exception due to the connection occurred, a lockdown will be initiated.", e);
+            lockdownManager.setState(e);
 
             throw e;
         }

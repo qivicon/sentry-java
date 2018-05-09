@@ -3,7 +3,6 @@ package io.sentry;
 import io.sentry.connection.Connection;
 import io.sentry.connection.EventSendCallback;
 import io.sentry.connection.LockedDownException;
-import io.sentry.connection.TooManyRequestsException;
 import io.sentry.context.Context;
 import io.sentry.context.ContextManager;
 import io.sentry.event.Event;
@@ -133,8 +132,8 @@ public class SentryClient {
 
         try {
             connection.send(event);
-        } catch (LockedDownException | TooManyRequestsException e) {
-            logger.debug("Dropping an Event due to lockdown: " + event);
+        } catch (LockedDownException e) {
+            lockdownLogger.warn("The connection to Sentry is currently locked down.", e);
         } catch (Exception e) {
             logger.error("An exception occurred while sending the event to Sentry.", e);
         } finally {
@@ -305,6 +304,15 @@ public class SentryClient {
      */
     public void addTag(String name, String value) {
         this.tags.put(name, value);
+    }
+    
+    /**
+     * Remove a tag with all future {@link Event}s.
+     *
+     * @param name Tag name
+     */
+    public void removeTag(String name) {
+        this.tags.remove(name);
     }
 
     /**

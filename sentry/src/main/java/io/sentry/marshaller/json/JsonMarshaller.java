@@ -53,10 +53,6 @@ public class JsonMarshaller implements Marshaller {
      */
     public static final String CULPRIT = "culprit";
     /**
-     * Name of the transaction that this event occurred inside of.
-     */
-    public static final String TRANSACTION = "transaction";
-    /**
      * An object representing the SDK name and version.
      */
     public static final String SDK = "sdk";
@@ -157,7 +153,7 @@ public class JsonMarshaller implements Marshaller {
             destination = new GZIPOutputStream(destination);
         }
 
-        try (JsonGenerator generator = createJsonGenerator(destination)) {
+        try (SentryJsonGenerator generator = new SentryJsonGenerator(jsonFactory.createGenerator(destination))) {
             writeContent(generator, event);
         } catch (IOException e) {
             logger.error("An exception occurred while serialising the event.", e);
@@ -168,19 +164,6 @@ public class JsonMarshaller implements Marshaller {
                 logger.error("An exception occurred while serialising the event.", e);
             }
         }
-    }
-
-    /**
-     * Creates the {@link JsonGenerator} used to marshall to json.
-     * This method makes it easier to provide a custom implementation.
-     *
-     * @param destination used to read the content
-     * @return a new instance
-     * @throws IOException on error reading the stream
-     */
-    @SuppressWarnings("WeakerAccess")
-    protected JsonGenerator createJsonGenerator(OutputStream destination) throws IOException {
-        return new SentryJsonGenerator(jsonFactory.createGenerator(destination));
     }
 
     @Override
@@ -206,7 +189,6 @@ public class JsonMarshaller implements Marshaller {
         generator.writeStringField(LOGGER, event.getLogger());
         generator.writeStringField(PLATFORM, event.getPlatform());
         generator.writeStringField(CULPRIT, event.getCulprit());
-        generator.writeStringField(TRANSACTION, event.getTransaction());
         writeSdk(generator, event.getSdk());
         writeTags(generator, event.getTags());
         writeBreadcumbs(generator, event.getBreadcrumbs());

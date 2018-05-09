@@ -24,10 +24,6 @@ import java.util.concurrent.TimeUnit;
  * It is possible to enable the "naive mode" to allow a connection over SSL using a certificate with a wildcard.
  */
 public class HttpConnection extends AbstractConnection {
-    /**
-     * HTTP code `429 Too Many Requests`, which is not included in HttpURLConnection.
-     */
-    public static final int HTTP_TOO_MANY_REQUESTS = 429;
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final Logger logger = LoggerFactory.getLogger(HttpConnection.class);
     /**
@@ -39,14 +35,9 @@ public class HttpConnection extends AbstractConnection {
      */
     private static final String SENTRY_AUTH = "X-Sentry-Auth";
     /**
-     * Default connection timeout of an HTTP connection to Sentry.
+     * Default timeout of an HTTP connection to Sentry.
      */
-    private static final int DEFAULT_CONNECTION_TIMEOUT = (int) TimeUnit.SECONDS.toMillis(1);
-    /**
-     * Default read timeout of an HTTP connection to Sentry.
-     */
-    private static final int DEFAULT_READ_TIMEOUT = (int) TimeUnit.SECONDS.toMillis(5);
-
+    private static final int DEFAULT_TIMEOUT = (int) TimeUnit.SECONDS.toMillis(1);
     /**
      * HostnameVerifier allowing wildcard certificates to work without adding them to the truststore.
      */
@@ -73,14 +64,9 @@ public class HttpConnection extends AbstractConnection {
      */
     private Marshaller marshaller;
     /**
-     * Timeout to connect of an HTTP connection to Sentry.
+     * Timeout of an HTTP connection to Sentry.
      */
-    private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
-    /**
-     * Read timeout of an HTTP connection to Sentry.
-     */
-    private int readTimeout = DEFAULT_READ_TIMEOUT;
-
+    private int timeout = DEFAULT_TIMEOUT;
     /**
      * Setting allowing to bypass the security system which requires wildcard certificates
      * to be added to the truststore.
@@ -138,8 +124,7 @@ public class HttpConnection extends AbstractConnection {
             }
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);
-            connection.setConnectTimeout(connectionTimeout);
-            connection.setReadTimeout(readTimeout);
+            connection.setConnectTimeout(timeout);
             connection.setRequestProperty(USER_AGENT, SentryEnvironment.getSentryName());
             connection.setRequestProperty(SENTRY_AUTH, getAuthHeader());
 
@@ -171,39 +156,6 @@ public class HttpConnection extends AbstractConnection {
             outputStream.close();
             connection.getInputStream().close();
         } catch (IOException e) {
-            Long retryAfterMs = null;
-            String retryAfterHeader = connection.getHeaderField("Retry-After");
-            if (retryAfterHeader != null) {
-                // CHECKSTYLE.OFF: EmptyCatchBlock
-                try {
-                    // CHECKSTYLE.OFF: MagicNumber
-                    retryAfterMs = (long) (Double.parseDouble(retryAfterHeader) * 1000L); // seconds -> milliseconds
-                    // CHECKSTYLE.ON: MagicNumber
-                } catch (NumberFormatException nfe) {
-                    // noop, use default retry
-                }
-                // CHECKSTYLE.ON: EmptyCatchBlock
-            }
-
-            Integer responseCode = null;
-            try {
-                responseCode = connection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) {
-                    logger.debug("Event '" + event.getId() + "' was rejected by the Sentry server due to a filter.");
-                    return;
-                } else if (responseCode == HTTP_TOO_MANY_REQUESTS) {
-                    /*
-                    If the response is a 429 we rethrow as a TooManyRequestsException so that we can
-                    avoid logging this is an error.
-                    */
-                    throw new TooManyRequestsException(
-                            "Too many requests to Sentry: https://docs.sentry.io/learn/quotas/",
-                            e, retryAfterMs, responseCode);
-                }
-            } catch (IOException responseCodeException) {
-                // pass
-            }
-
             String errorMessage = null;
             final InputStream errorStream = connection.getErrorStream();
             if (errorStream != null) {
@@ -213,7 +165,21 @@ public class HttpConnection extends AbstractConnection {
                 errorMessage = "An exception occurred while submitting the event to the Sentry server.";
             }
 
-            throw new ConnectionException(errorMessage, e, retryAfterMs, responseCode);
+            Long retryAfterMs = null;
+            String retryAfterHeader = connection.getHeaderField("Retry-After");
+            if (retryAfterHeader != null) {
+                // CHECKSTYLE.OFF: EmptyCatchBlock
+                try {
+                    // CHECKSTYLE.OFF: MagicNumber
+                    retryAfterMs = Long.parseLong(retryAfterHeader) * 1000L; // seconds -> milliseconds
+                    // CHECKSTYLE.ON: MagicNumber
+                } catch (NumberFormatException nfe) {
+                    // noop, use default retry
+                }
+                // CHECKSTYLE.ON: EmptyCatchBlock
+            }
+
+            throw new ConnectionException(errorMessage, e, retryAfterMs);
         } finally {
             connection.disconnect();
         }
@@ -239,36 +205,8 @@ public class HttpConnection extends AbstractConnection {
         return sb.toString();
     }
 
-    /**
-     * This will set the timeout that is used in establishing a connection to the url.
-     * By default this is set to 1 second.
-     *
-     * @deprecated Use setConnectionTimeout instead.
-     * @param timeout New timeout to set. If 0 is used (java default) wait forever.
-     */
-    @Deprecated
     public void setTimeout(int timeout) {
-        this.connectionTimeout = timeout;
-    }
-
-    /**
-     * This will set the timeout that is used in establishing a connection to the url.
-     * By default this is set to 5 second.
-     *
-     * @param timeout New timeout to set. If 0 is used (java default) wait forever.
-     */
-    public void setConnectionTimeout(int timeout) {
-        this.connectionTimeout = timeout;
-    }
-
-    /**
-     * This will set the timeout that is used in reading data on an already established connection.
-     * By default this is set to 1 seconds.
-     *
-     * @param timeout New timeout to set. If 0 is used (java default) wait forever.
-     */
-    public void setReadTimeout(int timeout) {
-        this.readTimeout = timeout;
+        this.timeout = timeout;
     }
 
     public void setMarshaller(Marshaller marshaller) {

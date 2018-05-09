@@ -22,8 +22,7 @@ class SentryProguardConfigTask extends DefaultTask {
         f.write("-keepattributes LineNumberTable,SourceFile\n" +
                 "-dontwarn com.facebook.fbui.**\n" +
                 "-dontwarn org.slf4j.**\n" +
-                "-dontwarn javax.**\n" +
-                "-keep class io.sentry.event.Event { *; }\n")
+                "-dontwarn javax.**\n")
         f.close()
         applicationVariant.getBuildType().buildType.proguardFiles(file)
     }

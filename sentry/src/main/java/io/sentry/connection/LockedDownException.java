@@ -5,4 +5,13 @@ package io.sentry.connection;
  */
 public class LockedDownException extends RuntimeException {
 
+    /**
+     * Construct a LockedDownException with a message.
+     *
+     * @param message Exception message.
+     */
+    public LockedDownException(String message) {
+        super(message);
+    }
+
 }

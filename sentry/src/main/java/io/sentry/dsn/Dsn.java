@@ -1,7 +1,6 @@
 package io.sentry.dsn;
 
 import io.sentry.config.Lookup;
-import io.sentry.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,12 +79,12 @@ public class Dsn {
     public static String dsnLookup() {
         String dsn = Lookup.lookup("dsn");
 
-        if (Util.isNullOrEmpty(dsn)) {
+        if (dsn == null) {
             // check if the user accidentally set "dns" instead of "dsn"
             dsn = Lookup.lookup("dns");
         }
 
-        if (Util.isNullOrEmpty(dsn)) {
+        if (dsn == null) {
             logger.warn("*** Couldn't find a suitable DSN, Sentry operations will do nothing!"
                 + " See documentation: https://docs.sentry.io/clients/java/ ***");
             dsn = DEFAULT_DSN;
@@ -185,7 +184,7 @@ public class Dsn {
     /**
      * Validates internally the DSN, and check for mandatory elements.
      * <p>
-     * Mandatory elements are the {@link #host}, {@link #publicKey} and {@link #projectId}.
+     * Mandatory elements are the {@link #host}, {@link #publicKey}, {@link #secretKey} and {@link #projectId}.
      */
     private void validate() {
         List<String> missingElements = new LinkedList<>();
@@ -199,6 +198,9 @@ public class Dsn {
 
             if (publicKey == null) {
                 missingElements.add("public key");
+            }
+            if (secretKey == null) {
+                missingElements.add("secret key");
             }
             if (projectId == null || projectId.isEmpty()) {
                 missingElements.add("project ID");

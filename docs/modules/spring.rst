@@ -12,18 +12,6 @@ events.
 The source can be found `on Github
 <https://github.com/getsentry/sentry-java/tree/master/sentry-spring>`_.
 
-Important Note About Logging Integrations
------------------------------------------
-
-**Note** that you should **not** configure ``sentry-spring``
-alongside a Sentry logging integration (such as ``sentry-logback``),
-or you will most likely double-report exceptions.
-
-A Sentry logging integration is more general and will capture errors (and
-possibly warnings, depending on your configuration) that occur inside *or outside*
-of a Spring controller. In most scenarios, using one of the logging integrations
-instead of ``sentry-spring`` is preferred.
-
 Installation
 ------------
 
@@ -34,22 +22,22 @@ Using Maven:
     <dependency>
         <groupId>io.sentry</groupId>
         <artifactId>sentry-spring</artifactId>
-        <version>1.7.4</version>
+        <version>1.5.4</version>
     </dependency>
 
 Using Gradle:
 
 .. sourcecode:: groovy
 
-    compile 'io.sentry:sentry-spring:1.7.4'
+    compile 'io.sentry:sentry-spring:1.5.4'
 
 Using SBT:
 
 .. sourcecode:: scala
 
-    libraryDependencies += "io.sentry" % "sentry-spring" % "1.7.4"
+    libraryDependencies += "io.sentry" % "sentry-spring" % "1.5.4"
 
-For other dependency managers see the `central Maven repository <https://search.maven.org/#artifactdetails%7Cio.sentry%7Csentry-spring%7C1.7.4%7Cjar>`_.
+For other dependency managers see the `central Maven repository <https://search.maven.org/#artifactdetails%7Cio.sentry%7Csentry-spring%7C1.5.4%7Cjar>`_.
 
 Usage
 -----
@@ -64,6 +52,13 @@ In order to record all exceptions thrown by your controllers, you can register
 ``io.sentry.spring.SentryExceptionResolver`` as a Bean in your application. Once
 registered, all exceptions will be sent to Sentry and then passed on to the default
 exception handlers.
+
+**Note** that you should **not** configure the ``SentryExceptionResolver``
+alongside a logging integration (such as ``sentry-logback``), or you will most
+likely double-report exceptions. You should use one or the other depending on
+your needs. A logging integration is more general and will capture errors (and
+possibly warnings, depending on your configuration) that occur inside *or outside*
+of a Spring controller.
 
 Configuration via ``web.xml``:
 

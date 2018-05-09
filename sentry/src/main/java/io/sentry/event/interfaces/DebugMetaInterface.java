@@ -1,6 +1,5 @@
 package io.sentry.event.interfaces;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
@@ -46,7 +45,7 @@ public class DebugMetaInterface implements SentryInterface {
     /**
      * Object that represents a single debug image.
      */
-    public static class DebugImage implements Serializable {
+    public static class DebugImage {
         private static final String DEFAULT_TYPE = "proguard";
         private final String uuid;
         private final String type;

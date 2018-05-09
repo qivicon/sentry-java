@@ -22,7 +22,10 @@ import io.sentry.util.Util;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 import static android.content.Context.ACTIVITY_SERVICE;
 
@@ -118,9 +121,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
         ActivityManager.MemoryInfo memInfo = getMemInfo(ctx);
         if (memInfo != null) {
             deviceMap.put("free_memory", memInfo.availMem);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                deviceMap.put("memory_size", memInfo.totalMem);
-            }
+            deviceMap.put("memory_size", memInfo.totalMem);
             deviceMap.put("low_memory",  memInfo.lowMemory);
         }
 
@@ -506,7 +507,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      * @return String representing the provided Date in ISO8601 format
      */
     private static String stringifyDate(Date date) {
-        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH).format(date);
+        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(date);
     }
 
     /**

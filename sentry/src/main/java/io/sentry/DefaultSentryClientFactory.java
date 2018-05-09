@@ -71,9 +71,9 @@ public class DefaultSentryClientFactory extends SentryClientFactory {
      */
     public static final String BUFFER_SIZE_OPTION = "buffer.size";
     /**
-     * Default number of events to cache offline when network is down or project is throttled.
+     * Default number of events to cache offline when network is down.
      */
-    public static final int BUFFER_SIZE_DEFAULT = 10;
+    public static final int BUFFER_SIZE_DEFAULT = 50;
     /**
      * Option for how long to wait between attempts to flush the disk buffer, in milliseconds.
      */
@@ -232,24 +232,19 @@ public class DefaultSentryClientFactory extends SentryClientFactory {
 
     @Override
     public SentryClient createSentryClient(Dsn dsn) {
+        SentryClient sentryClient = new SentryClient(createConnection(dsn), getContextManager(dsn));
         try {
-            SentryClient sentryClient = new SentryClient(createConnection(dsn), getContextManager(dsn));
-            try {
-                // `ServletRequestListener` was added in the Servlet 2.4 API, and
-                // is used as part of the `HttpEventBuilderHelper`, see:
-                // https://tomcat.apache.org/tomcat-5.5-doc/servletapi/
-                Class.forName("javax.servlet.ServletRequestListener", false, this.getClass().getClassLoader());
-                sentryClient.addBuilderHelper(new HttpEventBuilderHelper());
-            } catch (ClassNotFoundException e) {
-                logger.debug("The current environment doesn't provide access to servlets,"
-                    + " or provides an unsupported version.");
-            }
-            sentryClient.addBuilderHelper(new ContextBuilderHelper(sentryClient));
-            return configureSentryClient(sentryClient, dsn);
-        } catch (Exception e) {
-            logger.error("Failed to initialize sentry, falling back to no-op client", e);
-            return new SentryClient(new NoopConnection(), new ThreadLocalContextManager());
+            // `ServletRequestListener` was added in the Servlet 2.4 API, and
+            // is used as part of the `HttpEventBuilderHelper`, see:
+            // https://tomcat.apache.org/tomcat-5.5-doc/servletapi/
+            Class.forName("javax.servlet.ServletRequestListener", false, this.getClass().getClassLoader());
+            sentryClient.addBuilderHelper(new HttpEventBuilderHelper());
+        } catch (ClassNotFoundException e) {
+            logger.debug("The current environment doesn't provide access to servlets,"
+                + " or provides an unsupported version.");
         }
+        sentryClient.addBuilderHelper(new ContextBuilderHelper(sentryClient));
+        return configureSentryClient(sentryClient, dsn);
     }
 
     /**
@@ -428,7 +423,7 @@ public class DefaultSentryClientFactory extends SentryClientFactory {
         httpConnection.setMarshaller(marshaller);
 
         int timeout = getTimeout(dsn);
-        httpConnection.setConnectionTimeout(timeout);
+        httpConnection.setTimeout(timeout);
 
         boolean bypassSecurityEnabled = getBypassSecurityEnabled(dsn);
         httpConnection.setBypassSecurity(bypassSecurityEnabled);
@@ -459,7 +454,7 @@ public class DefaultSentryClientFactory extends SentryClientFactory {
      */
     protected Marshaller createMarshaller(Dsn dsn) {
         int maxMessageLength = getMaxMessageLength(dsn);
-        JsonMarshaller marshaller = createJsonMarshaller(maxMessageLength);
+        JsonMarshaller marshaller = new JsonMarshaller(maxMessageLength);
 
         // Set JSON marshaller bindings
         StackTraceInterfaceBinding stackTraceBinding = new StackTraceInterfaceBinding();
@@ -481,17 +476,6 @@ public class DefaultSentryClientFactory extends SentryClientFactory {
         marshaller.setCompression(getCompressionEnabled(dsn));
 
         return marshaller;
-    }
-
-    /**
-     * Create a {@link JsonMarshaller}. This method makes it easier to provide a custom implementation.
-     *
-     * @param maxMessageLength of the whole json output
-     * @return new marshaller
-     */
-    @SuppressWarnings("WeakerAccess")
-    protected JsonMarshaller createJsonMarshaller(int maxMessageLength) {
-        return new JsonMarshaller(maxMessageLength);
     }
 
     /**

@@ -3,12 +3,10 @@ package io.sentry.connection;
 import io.sentry.buffer.Buffer;
 import io.sentry.environment.SentryEnvironment;
 import io.sentry.event.Event;
-import io.sentry.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.NotSerializableException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -101,23 +99,7 @@ public class BufferedConnection implements Connection {
 
     @Override
     public void send(Event event) {
-        try {
-            actualConnection.send(event);
-        } catch (ConnectionException e) {
-            boolean notSerializable = e.getCause() instanceof NotSerializableException;
-
-            Integer responseCode = e.getResponseCode();
-            if (notSerializable || (responseCode != null && responseCode != HttpConnection.HTTP_TOO_MANY_REQUESTS)) {
-                // don't retry events (discard from the buffer) if:
-                // 1. they aren't serializable
-                // 2. the connection is up (valid response code was returned) and it's not an HTTP 429
-                buffer.discard(event);
-            }
-
-            // throw regardless
-            throw e;
-        }
-
+        actualConnection.send(event);
 
         // success, remove the event from the buffer
         buffer.discard(event);
@@ -132,7 +114,6 @@ public class BufferedConnection implements Connection {
     @SuppressWarnings("checkstyle:magicnumber")
     public void close() throws IOException {
         if (gracefulShutdown) {
-            Util.safelyRemoveShutdownHook(shutDownHook);
             shutDownHook.enabled = false;
         }
 
@@ -258,8 +239,6 @@ public class BufferedConnection implements Connection {
                     }
                 }
                 logger.trace("Flusher run exiting, no more events to send.");
-            } catch (Exception e) {
-                logger.error("Error running Flusher: ", e);
             } finally {
                 SentryEnvironment.stopManagingThread();
             }
