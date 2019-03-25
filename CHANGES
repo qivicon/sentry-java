@@ -1,7 +1,101 @@
+Version 1.7.22
+--------------
+ 
+- Don't put body in nested object if parameterMap is empty. (thanks erhangullu)
+- Allow creating and setting an `HttpInterface` in the Context. (thanks chris-smith-zocdoc)
+
+Version 1.7.21
+--------------
+
+- Updating sentry-cli version in the Android gradle plugin.
+
+Version 1.7.20
+--------------
+
+- Fixes for Android R8 support.
+
+Version 1.7.19
+--------------
+
+- Add support for Android R8 minification.
+
+Version 1.7.18
+--------------
+
+- Fix `--no-upload` option in Sentry Gradle Plugin under newer Groovy.
+- Allow overriding Sentry Organization and Project per buildType. (thanks nesterov-n)
+
+Version 1.7.17
+--------------
+
+- Fix for Sentry Gradle Plugin when using Android Studio 3.3 and Gradle 5.1.
+
+Version 1.7.16
+--------------
+
+- Fix timestamp format locale to be what Sentry expects.
+- Add `sentry-spring-boot-starter` module that autoconfigures Sentry for Spring-Boot. (thanks eddumelendez)
+- Fix Sentry Gradle Plugin for AGP 3.3 and Gradle 4.10 (thanks realdadfish)
+
+Version 1.7.15
+--------------
+
+- Allow users to provide a custom `manifestPath` in the Sentry Gradle Plugin.
+
+Version 1.7.14
+--------------
+
+- Fix Sentry Gradle Plugin asset directory so Proguard debug information
+  is written to the correct location when using newer versions of the
+  Android Gradle Plugin.
+
+Version 1.7.13
+--------------
+
+- Fix compatibility with Gradle 4.4+ (#621) (thanks cezary-butler)
+- Bump Sentry Gradle Plugin embedded sentry-cli to 1.36.3
+
+Version 1.7.12
+--------------
+
+- Only set `release` and `dist` on Android events if the user didn't provide their own.
+- Allow Gradle plugin to be included in library projects. (thanks linakis)
+
+Version 1.7.11
+--------------
+
+*Accidentally republished 1.7.10, please skip this release*
+
+Version 1.7.10
+--------------
+
+- Android Plugin: Look for properties file directly under flavor directory. (thanks biggestT)
+- Drop events when the server returns an HTTP 429.
+
+Version 1.7.9
+-------------
+
+- Encode SDK_VERSION in a Java class instead of looking up a ResouceBundle.
+
+Version 1.7.8
+-------------
+
+- Fix Android Gradle Plugin for >=3.3.0.
+
+Version 1.7.7
+-------------
+
+- Handle exceptions in `toString` calls when marshalling arbitrary objects to JSON.
+
+Version 1.7.6
+-------------
+
+*Built with the incorrect version of Java, please skip this release*
+
 Version 1.7.5
 -------------
 
--
+- Add `BreadcrumbBuilder.withData` (thanks kohenkatz)
 
 Version 1.7.4
 -------------

@@ -1,9 +1,7 @@
 {
   "url": "http://host/url",
   "method": "GET",
-  "data": {
-    "body": "body"
-  },
+  "data": "body",
   "query_string": "query",
   "cookies": {
     "Cookie1": "Value1"

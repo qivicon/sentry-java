@@ -56,8 +56,12 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
         eventBuilder.withSdkIntegration("android");
         PackageInfo packageInfo = getPackageInfo(ctx);
         if (packageInfo != null) {
-            eventBuilder.withRelease(packageInfo.packageName + "-" + packageInfo.versionName);
-            eventBuilder.withDist(Integer.toString(packageInfo.versionCode));
+            if (eventBuilder.getEvent().getRelease() == null) {
+                eventBuilder.withRelease(packageInfo.packageName + "-" + packageInfo.versionName);
+            }
+            if (eventBuilder.getEvent().getDist() == null) {
+                eventBuilder.withDist(Integer.toString(packageInfo.versionCode));
+            }
         }
 
         String androidId = Settings.Secure.getString(ctx.getContentResolver(), Settings.Secure.ANDROID_ID);
@@ -79,7 +83,8 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
         eventBuilder.withContexts(getContexts());
     }
 
-    private Map<String, Map<String, Object>> getContexts() {
+    //CHECKSTYLE.OFF: JavadocMethod
+    protected Map<String, Map<String, Object>> getContexts() {
         Map<String, Map<String, Object>> contexts = new HashMap<>();
         Map<String, Object> deviceMap = new HashMap<>();
         Map<String, Object> osMap     = new HashMap<>();
@@ -145,7 +150,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
         return contexts;
     }
 
-    private static String[] getProGuardUuids(Context ctx) {
+    protected static String[] getProGuardUuids(Context ctx) {
         if (cachedProGuardUuids != null) {
             return cachedProGuardUuids;
         }
@@ -178,7 +183,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      * @param ctx Android application context
      * @return the Application's PackageInfo if possible, or null
      */
-    private static PackageInfo getPackageInfo(Context ctx) {
+    protected static PackageInfo getPackageInfo(Context ctx) {
         try {
             return ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0);
         } catch (PackageManager.NameNotFoundException e) {
@@ -193,7 +198,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      *
      * @return family name of the device, as best we can tell
      */
-    private static String getFamily() {
+    protected static String getFamily() {
         try {
             return Build.MODEL.split(" ")[0];
         } catch (Exception e) {
@@ -207,7 +212,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      *
      * @return true if the application is running in an emulator, false otherwise
      */
-    private static Boolean isEmulator() {
+    protected static Boolean isEmulator() {
         try {
             return Build.FINGERPRINT.startsWith("generic")
                 || Build.FINGERPRINT.startsWith("unknown")
@@ -229,7 +234,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      * @param ctx Android application context
      * @return MemoryInfo object representing the memory state of the application
      */
-    private static ActivityManager.MemoryInfo getMemInfo(Context ctx) {
+    protected static ActivityManager.MemoryInfo getMemInfo(Context ctx) {
         try {
             ActivityManager actManager = (ActivityManager) ctx.getSystemService(ACTIVITY_SERVICE);
             ActivityManager.MemoryInfo memInfo = new ActivityManager.MemoryInfo();
@@ -247,7 +252,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      * @param ctx Android application context
      * @return the device's current screen orientation, or null if unknown
      */
-    private static String getOrientation(Context ctx) {
+    protected static String getOrientation(Context ctx) {
         try {
             String o;
             switch (ctx.getResources().getConfiguration().orientation) {
@@ -274,7 +279,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      * @param ctx Android application context
      * @return the device's current battery level (as a percentage of total), or null if unknown
      */
-    private static Float getBatteryLevel(Context ctx) {
+    protected static Float getBatteryLevel(Context ctx) {
         try {
             Intent intent = ctx.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
             if (intent == null) {
@@ -305,7 +310,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      * @param ctx Android application context
      * @return whether or not the device is currently plugged in and charging, or null if unknown
      */
-    private static Boolean isCharging(Context ctx) {
+    protected static Boolean isCharging(Context ctx) {
         try {
             Intent intent = ctx.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
             if (intent == null) {
@@ -326,7 +331,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      *
      * @return the device's current kernel version, as a string
      */
-    private static String getKernelVersion() {
+    protected static String getKernelVersion() {
         String errorMsg = "Exception while attempting to read kernel information";
         String defaultVersion = System.getProperty("os.version");
 
@@ -360,7 +365,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      *
      * @return true if heuristics show the device is probably rooted, otherwise false
      */
-    private static Boolean isRooted() {
+    protected static Boolean isRooted() {
         if (android.os.Build.TAGS != null && android.os.Build.TAGS.contains("test-keys")) {
             return true;
         }
@@ -396,7 +401,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
         return false;
     }
 
-    private static boolean isExternalStorageMounted() {
+    protected static boolean isExternalStorageMounted() {
         return Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)
             && !Environment.isExternalStorageEmulated();
     }
@@ -406,7 +411,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      *
      * @return the unused amount of internal storage, in bytes
      */
-    private static Long getUnusedInternalStorage() {
+    protected static Long getUnusedInternalStorage() {
         try {
             File path = Environment.getDataDirectory();
             StatFs stat = new StatFs(path.getPath());
@@ -424,7 +429,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      *
      * @return the total amount of internal storage, in bytes
      */
-    private static Long getTotalInternalStorage() {
+    protected static Long getTotalInternalStorage() {
         try {
             File path = Environment.getDataDirectory();
             StatFs stat = new StatFs(path.getPath());
@@ -444,7 +449,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      * @return the unused amount of external storage, in bytes, or null if no external storage
      * is mounted
      */
-    private static Long getUnusedExternalStorage() {
+    protected static Long getUnusedExternalStorage() {
         try {
             if (isExternalStorageMounted()) {
                 File path = Environment.getExternalStorageDirectory();
@@ -467,7 +472,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      * @return the total amount of external storage, in bytes, or null if no external storage
      * is mounted
      */
-    private static Long getTotalExternalStorage() {
+    protected static Long getTotalExternalStorage() {
         try {
             if (isExternalStorageMounted()) {
                 File path = Environment.getExternalStorageDirectory();
@@ -489,7 +494,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      * @param ctx Android application context
      * @return the DisplayMetrics object for the current application
      */
-    private static DisplayMetrics getDisplayMetrics(Context ctx) {
+    protected static DisplayMetrics getDisplayMetrics(Context ctx) {
         try {
             return ctx.getResources().getDisplayMetrics();
         } catch (Exception e) {
@@ -505,7 +510,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      * @param date Date to format as ISO8601
      * @return String representing the provided Date in ISO8601 format
      */
-    private static String stringifyDate(Date date) {
+    protected static String stringifyDate(Date date) {
         return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH).format(date);
     }
 
@@ -515,7 +520,7 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      * @param ctx Android application context
      * @return Application name
      */
-    private static String getApplicationName(Context ctx) {
+    protected static String getApplicationName(Context ctx) {
         try {
             ApplicationInfo applicationInfo = ctx.getApplicationInfo();
             int stringId = applicationInfo.labelRes;
@@ -539,11 +544,11 @@ public class AndroidEventBuilderHelper implements EventBuilderHelper {
      * @param ctx Android application context
      * @return true if the application has internet access
      */
-    private static boolean isConnected(Context ctx) {
+    protected static boolean isConnected(Context ctx) {
         ConnectivityManager connectivityManager =
             (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
-
+    //CHECKSTYLE.ON: JavadocMethod
 }
