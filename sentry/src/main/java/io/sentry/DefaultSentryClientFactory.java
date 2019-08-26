@@ -5,7 +5,7 @@ import io.sentry.buffer.DiskBuffer;
 import io.sentry.config.Lookup;
 import io.sentry.connection.*;
 import io.sentry.context.ContextManager;
-import io.sentry.context.ThreadLocalContextManager;
+import io.sentry.context.DefaultContextManager;
 import io.sentry.dsn.Dsn;
 import io.sentry.event.helper.ContextBuilderHelper;
 import io.sentry.event.helper.HttpEventBuilderHelper;
@@ -248,7 +248,7 @@ public class DefaultSentryClientFactory extends SentryClientFactory {
             return configureSentryClient(sentryClient, dsn);
         } catch (Exception e) {
             logger.error("Failed to initialize sentry, falling back to no-op client", e);
-            return new SentryClient(new NoopConnection(), new ThreadLocalContextManager());
+            return new SentryClient(new NoopConnection(), new DefaultContextManager());
         }
     }
 
@@ -498,13 +498,13 @@ public class DefaultSentryClientFactory extends SentryClientFactory {
      * Returns the {@link ContextManager} to use for locating and storing data that is context specific,
      * such as {@link io.sentry.event.Breadcrumb}s.
      * <p>
-     * Defaults to {@link ThreadLocalContextManager}.
+     * Defaults to {@link DefaultContextManager}.
      *
      * @param dsn Sentry server DSN which may contain options.
      * @return the {@link ContextManager} to use.
      */
     protected ContextManager getContextManager(Dsn dsn) {
-        return new ThreadLocalContextManager();
+        return new DefaultContextManager();
     }
 
     /**
